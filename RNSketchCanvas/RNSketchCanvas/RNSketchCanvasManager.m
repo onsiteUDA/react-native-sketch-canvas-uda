@@ -57,6 +57,10 @@ RCT_CUSTOM_VIEW_PROPERTY(text, NSArray, RNSketchCanvas)
 
 #pragma mark - Exported methods
 
+RCT_EXPORT_METHOD(getImageDimensions:(NSString *)width height:(NSString *)height)
+{
+ RCTLogInfo(@"Pretending to create an event %@ at %@", width, height);
+}
 
 RCT_EXPORT_METHOD(save:(nonnull NSNumber *)reactTag type:(NSString*) type folder:(NSString*) folder filename:(NSString*) filename withTransparentBackground:(BOOL) transparent includeImage:(BOOL)includeImage includeText:(BOOL)includeText cropToImageSize:(BOOL)cropToImageSize)
 {

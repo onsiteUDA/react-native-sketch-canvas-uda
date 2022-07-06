@@ -13,6 +13,8 @@
     RNSketchData *_currentPath;
 
     CGSize _lastSize;
+    CGSize _portraitSize;
+    CGSize _currentSize;
 
     CGContextRef _drawingContext, _translucentDrawingContext;
     CGImageRef _frozenImage, _translucentFrozenImage;
@@ -43,7 +45,8 @@
     CGContextRef context = UIGraphicsGetCurrentContext();
 
     CGRect bounds = self.bounds;
-
+    CGSize lastSize = _lastSize;
+    
     if (_needsFullRedraw) {
         [self setFrozenImageNeedsUpdate];
         CGContextClearRect(_drawingContext, bounds);
@@ -63,7 +66,7 @@
 
     if (_backgroundImage) {
         if (!_backgroundImageScaled) {
-            _backgroundImageScaled = [self scaleImage:_backgroundImage toSize:bounds.size contentMode: _backgroundImageContentMode];
+            _backgroundImageScaled = [self scaleImage:_backgroundImage toSize:bounds.size contentMode: _backgroundImageContentMode lastSize: lastSize];
         }
 
         [_backgroundImageScaled drawInRect:bounds];
@@ -90,6 +93,10 @@
     [super layoutSubviews];
 
     if (!CGSizeEqualToSize(self.bounds.size, _lastSize)) {
+        _currentSize = self.bounds.size;
+//        if (self.bounds.size.width < self.bounds.size.height) {
+//            _lastSize = self.bounds.size;
+//        }
         _lastSize = self.bounds.size;
         CGContextRelease(_drawingContext);
         _drawingContext = nil;
@@ -99,7 +106,7 @@
         
         for (CanvasText *text in [_arrTextOnSketch arrayByAddingObjectsFromArray: _arrSketchOnText]) {
             CGPoint position = text.position;
-            if (!text.isAbsoluteCoordinate) {
+            if (text.isAbsoluteCoordinate) {
                 position.x *= self.bounds.size.width;
                 position.y *= self.bounds.size.height;
             }
@@ -306,7 +313,7 @@
             CGContextSetRGBFillColor(context, 1.0f, 1.0f, 1.0f, 1.0f);
             CGContextFillRect(context, rect);
         }
-        CGRect targetRect = [Utility fillImageWithSize:self.bounds.size toSize:rect.size contentMode:@"AspectFill"];
+        CGRect targetRect = [Utility fillImageWithSize:self.bounds.size toSize:rect.size contentMode:@"AspectFill" currentSize:_currentSize];
         if (includeImage) {
             [_backgroundImage drawInRect:rect];
         }
@@ -339,7 +346,8 @@
             CGContextFillRect(context, rect);
         }
         if (_backgroundImage && includeImage) {
-            CGRect targetRect = [Utility fillImageWithSize:_backgroundImage.size toSize:rect.size contentMode:_backgroundImageContentMode];
+            CGRect targetRect = [Utility fillImageWithSize:_backgroundImage.size toSize:rect.size contentMode:_backgroundImageContentMode currentSize:_currentSize];
+                        
             [_backgroundImage drawInRect:targetRect];
         }
         
@@ -396,14 +404,19 @@
     }
 }
 
-- (UIImage *)scaleImage:(UIImage *)originalImage toSize:(CGSize)size contentMode: (NSString*)mode
+- (UIImage *)scaleImage:(UIImage *)originalImage toSize:(CGSize)size contentMode: (NSString*)mode lastSize: (CGSize)last
 {
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     CGContextRef context = CGBitmapContextCreate(NULL, size.width, size.height, 8, 0, colorSpace, kCGImageAlphaPremultipliedLast);
     CGContextClearRect(context, CGRectMake(0, 0, size.width, size.height));
-
-    CGRect targetRect = [Utility fillImageWithSize:originalImage.size toSize:size contentMode:mode];
-    CGContextDrawImage(context, targetRect, originalImage.CGImage);
+    
+    if (size.width > last.width) {
+        CGRect targetRect = [Utility fillImageWithSize:originalImage.size toSize:last contentMode:mode currentSize:_currentSize];
+        CGContextDrawImage(context, targetRect, originalImage.CGImage);
+    } else {
+        CGRect targetRect = [Utility fillImageWithSize:originalImage.size toSize:size contentMode:mode currentSize:_currentSize];
+        CGContextDrawImage(context, targetRect, originalImage.CGImage);
+    }
     
     CGImageRef scaledImage = CGBitmapContextCreateImage(context);
     CGColorSpaceRelease(colorSpace);

@@ -35,9 +35,20 @@ CGPoint midPoint (CGPoint p1, CGPoint p2) {
     return false;
 }
 
-+ (CGRect)fillImageWithSize:(CGSize)imgSize toSize:(CGSize)targetSize contentMode:(NSString*)mode {
++ (CGRect)fillImageWithSize:(CGSize)imgSize toSize:(CGSize)targetSize contentMode:(NSString*)mode currentSize:(CGSize)current {
+    NSString *orientation = @"";
+    if (imgSize.width < imgSize.height) {
+        orientation = @"portrait";
+    } else {
+        orientation = @"landscape";
+    }
     CGFloat imageAspectRatio = imgSize.width / imgSize.height;
     CGFloat targetAspectRatio = targetSize.width / targetSize.height;
+//    CGFloat verticalScale = imgSize.height / targetSize.height;
+//    CGFloat horizontalScale = imgSize.width / targetSize.width;
+//    CGFloat scale = MAX(verticalScale, horizontalScale);
+//    CGFloat imageViewHeight = imgSize.height / scale;
+//    CGFloat imageViewWidth = imgSize.width / scale;
     switch ([@[@"AspectFill", @"AspectFit", @"ScaleToFill"] indexOfObject: mode]) {
         case 0: {
             CGFloat scaleFactor = targetAspectRatio < imageAspectRatio ? targetSize.height / imgSize.height : targetSize.width / imgSize.width;
@@ -49,12 +60,28 @@ CGPoint midPoint (CGPoint p1, CGPoint p2) {
         default: {
             CGFloat scaleFactor = targetAspectRatio > imageAspectRatio ? targetSize.height / imgSize.height : targetSize.width / imgSize.width;
             CGFloat w = imgSize.width * scaleFactor, h = imgSize.height * scaleFactor;
-            return CGRectMake((targetSize.width - w) / 2, (targetSize.height - h) / 2, w, h);
+            if (imgSize.width > imgSize.height && [orientation isEqualToString:@"landscape"]) {
+                return CGRectMake((targetSize.width - w) / 2, (targetSize.height - h) / 2, w, h);
+            } else {
+                return CGRectMake((targetSize.width - w) / 2, (targetSize.height - h) / 2, w, h);
+            }
+            //return CGRectMake((targetSize.width - imageViewWidth) / 2, (targetSize.height - imageViewHeight) / 2, imageViewWidth, imageViewHeight);
         }
         case 2: {
             return  CGRectMake(0, 0, targetSize.width, targetSize.height);
         }
     }
+}
+
++ (NSString*)grabImageSize:(CGSize)imgSize toSize:(CGSize)targetSize contentMode:(NSString*)mode {
+    CGFloat imageAspectRatio = imgSize.width / imgSize.height;
+    CGFloat targetAspectRatio = targetSize.width / targetSize.height;
+    CGFloat scaleFactor = targetAspectRatio > imageAspectRatio ? targetSize.height / imgSize.height : targetSize.width / imgSize.width;
+    CGFloat w = imgSize.width * scaleFactor, h = imgSize.height * scaleFactor;
+    NSString *width = [[NSNumber numberWithFloat:w] stringValue];
+    NSString *height = [[NSNumber numberWithFloat:h] stringValue];
+    NSString *size = [NSString stringWithFormat: @"%@ %@", width, height];
+    return size;
 }
 
 @end

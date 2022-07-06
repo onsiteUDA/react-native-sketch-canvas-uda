@@ -19,6 +19,6 @@ CGPoint midPoint (CGPoint p1, CGPoint p2);
          tertiaryPoint: (CGPoint)tPoint
          previousPoint: (CGPoint) pPoint;
 + (BOOL)isSameColor:(UIColor *)color1 color:(UIColor *)color2;
-+ (CGRect)fillImageWithSize:(CGSize)imgSize toSize:(CGSize)targetSize contentMode:(NSString*)mode;
-
++ (CGRect)fillImageWithSize:(CGSize)imgSize toSize:(CGSize)targetSize contentMode:(NSString*)mode currentSize:(CGSize)current;
++ (NSString*)grabImageSize:(CGSize)imgSize toSize:(CGSize)targetSize contentMode:(NSString*)mode;
 @end

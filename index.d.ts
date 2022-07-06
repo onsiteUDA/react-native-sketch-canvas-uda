@@ -133,6 +133,7 @@ export interface RNSketchCanvasProps {
   undoComponent?: JSX.Element,
   clearComponent?: JSX.Element,
   saveComponent?: JSX.Element,
+  editToolComponent?: JSX.Element,
   strokeComponent?: (color: string) => JSX.Element
   strokeSelectedComponent?: (color: string, index: number, changed: boolean) => JSX.Element
   strokeWidthComponent?: (width: number) => JSX.Element
