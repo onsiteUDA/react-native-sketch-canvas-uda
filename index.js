@@ -20,7 +20,8 @@ import {
   SaturationSlider,
   LightnessSlider
 } from 'react-native-color';
-import Orientation from 'react-native-orientation';
+import Orientation from 'react-native-orientation-locker';
+/* import Orientation from 'react-native-orientation'; */
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 const hasNotch = DeviceInfo.hasNotch() || DeviceInfo.getDeviceId().includes('iPhone13');
@@ -127,7 +128,6 @@ export default class RNSketchCanvas extends React.Component {
 
     savePreference: null,
     onSketchSaved: () => { },
-    onBackPressed: () => { },
 
     text: null,
     localSourceImage: null,
@@ -147,8 +147,9 @@ export default class RNSketchCanvas extends React.Component {
       alpha: 'FF',
       showColorTool: false,
       setTinycolor: tinycolor('red').toHsl(),
-      width: Dimensions.get('window').width,
+      width: Dimensions.get('window').width-20,
       height: Dimensions.get('window').height,
+      hasBeenEdited:false
     }
 
     this._colorChanged = false
@@ -169,6 +170,7 @@ export default class RNSketchCanvas extends React.Component {
 
   clear() {
     this._sketchCanvas.clear()
+    this.setState({hasBeenEdited:false})
   }
 
   undo() {
@@ -244,24 +246,27 @@ export default class RNSketchCanvas extends React.Component {
     console.log('index.js sketchcanvas')
     return (
       <View style={this.props.containerStyle}>
-
-       <TouchableOpacity style={{position: 'absolute', top: hasNotch? 35 : 20, left: 5, zIndex: 10}} onPress={() => this.props.onBackPressed(true)}>
-          <FontAwesome name='chevron-left' style={{ paddingLeft: 14, fontSize: 24, color: 'white' }} />
-        </TouchableOpacity>
-
         {this.state.width < this.state.height &&
-          <View style={{ flexDirection: 'column', position: this.props.imageDimensions.width < this.props.imageDimensions.height ? 'absolute' : 'absolute', bottom: hasNotch ? 15 : 0, zIndex: 10, width: this.state.width, paddingHorizontal: 10}}>
+          <View style={{ flexDirection: 'column', position: this.props.imageDimensions.width < this.props.imageDimensions.height ? 'absolute' : 'absolute', bottom: hasNotch ? 25 : 15, zIndex: 10, width: this.state.width+21, paddingHorizontal: 21}}>
             <View style={{  flexDirection: 'row', alignItems: 'stretch', justifyContent: 'space-between'}}>
-              {this.props.eraseComponent && (
-                <TouchableOpacity style={{}} onPress={() => { this.setState({ color: '#00000000' }) }}>
-                  {this.props.eraseComponent}
-                </TouchableOpacity>)
-              }
-              {this.props.undoComponent && (
+               {this.props.undoComponent && (
                 <TouchableOpacity onPress={() => { this.props.onUndoPressed(this.undo()) }}>
                   {this.props.undoComponent}
                 </TouchableOpacity>)
               }
+              {this.props.editToolComponent && (
+                  <TouchableOpacity onPress={() => { 
+                    this.setState({ showColorTool: !this.state.showColorTool, color: tinycolor(this.state.setTinycolor).toHexString() }) 
+                  }}>
+                  {this.props.editToolComponent(tinycolor(this.state.setTinycolor).toHexString())}
+                  </TouchableOpacity>)
+              }
+              {this.props.eraseComponent && (
+                <TouchableOpacity style={{}} onPress={() => { this.setState({ color: '#00000000' }) }}>
+                  {this.props.eraseComponent(this.state.color === '#00000000' )}
+                </TouchableOpacity>)
+              }
+             
 
               {this.props.strokeWidthComponent && (
                 <TouchableOpacity onPress={() => { this.nextStrokeWidth() }}>
@@ -269,17 +274,10 @@ export default class RNSketchCanvas extends React.Component {
                 </TouchableOpacity>)
               }
               
-              {this.props.editToolComponent && (
-                  <TouchableOpacity onPress={() => { 
-                    this.setState({ showColorTool: !this.state.showColorTool, color: tinycolor(this.state.setTinycolor).toHexString() }) 
-                  }}>
-                  {this.props.editToolComponent}
-                  </TouchableOpacity>)
-              }
 
               {this.props.clearComponent && (
                 <TouchableOpacity onPress={() => { this.clear(); this.props.onClearPressed() }}>
-                  {this.props.clearComponent}
+                  {this.props.clearComponent(this.state.hasBeenEdited)}
                 </TouchableOpacity>)
               }
 
@@ -293,7 +291,7 @@ export default class RNSketchCanvas extends React.Component {
         }            
         
         {this.state.width < this.state.height && 
-          <View style={[{ display: this.state.showColorTool ? 'flex' : 'none', position: 'absolute', zIndex: 11, bottom: hasNotch ? 65 : 50 }]}>
+          <View style={[{ display: this.state.showColorTool ? 'flex' : 'none', position: 'absolute', zIndex: 11, bottom: hasNotch ? 90 : 75 }]}>
             <View style={{backgroundColor: 'rgba(0, 0, 0, 0.1)'}}> 
               <HueSlider
                 style={[styles.sliderRow, { width: this.state.width-25 }]}
@@ -315,15 +313,14 @@ export default class RNSketchCanvas extends React.Component {
         <View style={{flexDirection: 'row',}}>
           <SketchCanvas
             ref={ref => this._sketchCanvas = ref}
-            style={{marginVertical: (this.state.height - this.calculateSize('height'))/2, alignSelf: 'center', height: this.calculateSize('height'), width: this.calculateSize('width')}}
+            style={{marginBottom: (this.state.height - this.calculateSize('height'))/2, marginTop: (this.state.height - this.calculateSize('height'))/2 - 20,alignSelf: 'center', height: this.calculateSize('height'), width: this.calculateSize('width')}}
             strokeColor={this.state.color + (this.state.color.length === 9 ? '' : this.state.alpha)}
             onStrokeStart={() => {
-              this.setState({ showColorTool: false })
+              this.setState({ showColorTool: false ,hasBeenEdited:true})
               this.props.onStrokeStart
             }}
             onStrokeChanged={this.props.onStrokeChanged}
             onStrokeEnd={this.props.onStrokeEnd}
-            onBackPressed={(pressed) => this.props.onBackPressed()}
             user={this.props.user}
             strokeWidth={this.state.strokeWidth}
             onSketchSaved={(success, path) => this.props.onSketchSaved(success, path)}
@@ -356,15 +353,17 @@ export default class RNSketchCanvas extends React.Component {
           {this.state.width > this.state.height &&
           <View style={{ flexDirection: 'column', zIndex: 10 }}>
             <View style={{ position: 'absolute', right: hasNotch ? 20 : 10, top: 10, flexDirection: 'column', alignItems: 'space-between', justifyContent: 'space-between', }}>
-              {this.props.eraseComponent && (
-                <TouchableOpacity onPress={() => { this.setState({ color: '#00000000' }) }}>
-                  {this.props.eraseComponent}
-                </TouchableOpacity>)
-              }
               {this.props.undoComponent && (
                 <TouchableOpacity onPress={() => { this.props.onUndoPressed(this.undo()) }}>
                   {this.props.undoComponent}
                 </TouchableOpacity>)
+              } 
+              {this.props.editToolComponent && (
+                  <TouchableOpacity onPress={() => { 
+                    this.setState({ showColorTool: !this.state.showColorTool, color: tinycolor(this.state.setTinycolor).toHexString() }) 
+                  }}>
+                  {this.props.editToolComponent(tinycolor(this.state.setTinycolor).toHexString())}
+                  </TouchableOpacity>)
               }
 
               {this.props.strokeWidthComponent && (
@@ -372,15 +371,13 @@ export default class RNSketchCanvas extends React.Component {
                   {this.props.strokeWidthComponent(this.state.strokeWidth)}
                 </TouchableOpacity>)
               }
-              
-              {this.props.editToolComponent && (
-                  <TouchableOpacity onPress={() => { 
-                    this.setState({ showColorTool: !this.state.showColorTool, color: tinycolor(this.state.setTinycolor).toHexString() }) 
-                  }}>
-                  {this.props.editToolComponent}
-                  </TouchableOpacity>)
-              }
 
+              {this.props.eraseComponent && (
+                <TouchableOpacity onPress={() => { this.setState({ color: '#00000000' }) }}>
+                  {this.props.eraseComponent(this.state.color === '#00000000' )}
+                </TouchableOpacity>)
+              }
+              
               {this.props.clearComponent && (
                 <TouchableOpacity onPress={() => { this.clear(); this.props.onClearPressed() }}>
                   {this.props.clearComponent}

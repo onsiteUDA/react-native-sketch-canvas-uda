@@ -18,7 +18,6 @@ import { requestPermissions } from './handlePermissions';
 import ImageZoom from 'react-native-image-pan-zoom';
 import { Dimensions } from 'react-native';
 import prettyFormat from 'pretty-format';
-import Orientation from 'react-native-orientation';
 
 const RNSketchCanvas = requireNativeComponent('RNSketchCanvas', SketchCanvas, {
   nativeOnly: {
